@@ -1,0 +1,65 @@
+package graph;
+
+import java.util.HashMap;
+
+/* See restrictions in Graph.java. */
+
+/** A partial implementation of ShortestPaths that contains the weights of
+ *  the vertices and the predecessor edges.   The client needs to
+ *  supply only the two-argument getWeight method.
+ *  @author ClarkChen
+ */
+public abstract class SimpleShortestPaths extends ShortestPaths {
+
+    /** The shortest paths in G from SOURCE. */
+    public SimpleShortestPaths(Graph G, int source) {
+        this(G, source, 0);
+    }
+
+    /** A shortest path in G from SOURCE to DEST. */
+    public SimpleShortestPaths(Graph G, int source, int dest) {
+        super(G, source, dest);
+        //this constructor gets called by the other one. Initialize predecessors here.
+        predecessors = new HashMap<Integer, Integer>();
+        distanceMap = new HashMap<Integer, Double>();
+    }
+
+    @Override
+    public double getWeight(int v) {
+        // FIXME
+        return distanceMap.get(v);
+    }
+
+    @Override
+    protected void setWeight(int v, double w) {
+        // FIXME
+    	distanceMap.put(v, w);
+    }
+
+    @Override
+    public int getPredecessor(int v) {
+        // FIXME
+    	if (!_G.contains(v) || !predecessors.containsKey(v)) {
+    		return 0;
+    	}
+        return predecessors.get(v);
+    }
+
+    @Override
+    protected void setPredecessor(int v, int u) {
+        // FIXME
+    	predecessors.put(v, u);
+    }
+
+    // FIXME
+
+    //Keep track of Predecessor at any given node
+    //we want to return the shortest path: (start, end)
+    	//get predecessor of end node, should be able to rebuild ENTIRE SHORTEST PATH (may have to create new Data Structure)
+
+    private HashMap<Integer, Integer> predecessors;//the pred of v1 is v2
+    private HashMap<Integer, Double> distanceMap;//map vertex with weight (distance from source) don't include estimate
+    //only use estimate to determine what to visit!
+    //getWeight(v) --> weight the vertex (Dijkstra's)
+    //keep updating the known weights in this HashMap
+}

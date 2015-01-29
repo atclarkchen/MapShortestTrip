@@ -1,0 +1,44 @@
+package graph;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+
+/* See restrictions in Graph.java. */
+
+/** Implements a depth-first traversal of a graph.  Generally, the
+ *  client will extend this class, overriding the visit and
+ *  postVisit methods, as desired (by default, they do nothing).
+ *  @author ClarkChen
+ */
+public class DepthFirstTraversal extends Traversal {//change around 8 lines!
+
+    /** A depth-first Traversal of G, using FRINGE as the fringe. */
+    protected DepthFirstTraversal(Graph G) {
+        //super(G, null);
+        // FIXME
+    	super(G, Collections.asLifoQueue(new ArrayDeque<Integer>()));//asLASTINFIRSTOUT Queue (or a stack)
+    }
+
+    @Override
+    protected boolean visit(int v) {
+        return super.visit(v);
+    }
+
+    @Override
+    protected boolean postVisit(int v) {
+        return super.postVisit(v);
+    }
+
+    /** Override shouldPostVisit to true for DFT. */
+    protected boolean shouldPostVisit(int v) {
+    	return true;
+    }
+
+    // FIXME
+    /*public ArrayList<Integer> getProcessed() {
+    	return null;
+    }*/
+
+}

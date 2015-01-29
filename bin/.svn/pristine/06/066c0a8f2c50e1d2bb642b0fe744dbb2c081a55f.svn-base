@@ -1,0 +1,314 @@
+package graph;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+
+/** Unit tests for the Graph class.
+ *  @author ClarkChen
+ */
+public class GraphTesting {
+
+    // Add tests.  Here's a sample.
+
+    @Test
+    public void emptyGraph() {
+        DirectedGraph g = new DirectedGraph();
+        assertEquals("Initial graph has vertices", 0, g.vertexSize());
+        assertEquals("Initial graph has edges", 0, g.edgeSize());
+        assertEquals(g.isDirected(), true);
+
+        UndirectedGraph u = new UndirectedGraph();
+        assertEquals("Initial graph has vertices", 0, u.vertexSize());
+        assertEquals("Initial graph has edges", 0, u.edgeSize());
+        assertEquals(u.isDirected(), false);
+    }
+
+    @Test
+    public void basicTests() {
+        DirectedGraph g = new DirectedGraph();
+
+        //Test Adding Vertices
+        /** Returns a new vertex and adds it to me with no incident edges.
+         *  The vertex number is always the smallest integer >= 1 that is not
+         *  currently one of my vertex numbers.  */
+        int v1 = g.add();
+        int v2 = g.add();
+        int v3 = g.add();
+        assertEquals(0, g.edgeSize());
+
+        assertTrue(g.contains(1));
+        assertTrue(g.contains(2));
+        assertTrue(!g.contains(4));
+
+        //Test Remove Vertex (and all incident edges)
+        /** Remove V, if present, and all adjacent edges. */
+        g.remove(20); //attempt to remove vertext that doesn't exist
+        assertEquals(g.vertexSize(), 3);//assert that size remains as 3
+        g.remove(v2);
+        assertEquals(g.vertexSize(), 2); //should be 3 - 1 */
+
+        //Test add following removing v2. Should add 2, and then 4.
+        assertEquals(2, g.add());
+        assertEquals(3, g.vertexSize());
+        assertEquals(3, g.maxVertex());
+        int v4 = g.add();
+        assertEquals(4, v4);
+        assertEquals(4, g.vertexSize());
+        assertTrue(g.contains(2));
+        //contains 4 vertices
+
+        //Test Adding Edges
+        /** Add an edge incident on U and V. If I am directed, the edge is
+         *  directed (leaves U and enters V).  Assumes U and V are my
+         *  vertices.  Has no effect if there is already an edge from U to
+         *  V.  Returns U. */
+
+        int e1 = g.add(v1, v2);
+        int e0 = g.add(20, 20);//attempt to construct an edge between vertices that do not exist
+        int e2 = g.add(v1, v2);//should have no effect since e1 already exists.
+        assertEquals(1, g.edgeSize());
+        int e3 = g.add(v1, v3);//construct 2nd edge from v1, to v3
+        assertEquals(2, g.edgeSize());
+        int e4 = g.add(v3, v4);
+        int e5 = g.add(v4, v2);
+        int e6 = g.add(v2, v3);
+        assertEquals(5, g.edgeSize());
+
+        //Test Remove Vertices (pt. 2: remove all edges to or from that vertex)
+            //note: remove v2 as a vertex from g. Then remove all edges that point TO v2 (from other vertices).
+        //System.out.println("Test remove v2...");
+        g.remove(v2);
+        assertEquals(3, g.vertexSize());//4 - 1 number of vertices left.
+        assertEquals(2, g.edgeSize());//edges from V2 were deleted as well.
+
+
+
+        //Test Remove Edge
+        /** Remove edge (U, V) from me, if present. */
+        g.remove(v1, v3);
+        g.remove(20, 1);//invalid edge. remove does nothing.
+        assertEquals(1, g.edgeSize());
+        assertEquals(3, g.vertexSize());
+    }
+
+    @Test
+    public void iterationTests() {
+        //Test mine
+        GraphObj g = new DirectedGraph();
+        int v1 = g.add();
+        int v2 = g.add();
+        int v3 = g.add();
+        int v4 = g.add();
+        int v5 = g.add();
+        g.add(v1, v2);
+        g.add(v1, v3);
+        g.add(v1, v4);
+        g.add(v2, v3);
+        g.add(v3, v4);
+        g.add(v4, v1);
+        g.add(v4, v5);//v4 and v5 to be used to test edgeID unique-ness
+        g.add(v5, v4);
+        assertTrue(!g.mine(6));
+        assertTrue(g.mine(4));
+
+        //Test edges() iteration
+        int count = 0;
+        for (int[] x : g.edges()) {
+            //System.out.println("edge iterations: " + Arrays.toString(x));
+            count ++;
+        }
+        assertEquals(8, count);
+
+        //Test and experiment with edgeID (unsure if current mathematical formula truncated to (int) works!)
+        assertEquals(0, g.edgeId(v4,  v2));//should be 0 because edge doesn't exist.
+        assertTrue(g.edgeId(v4, v5) != g.edgeId(v5, v4));
+        //System.out.println("Edge id (v1, v2): " + g.edgeId(v4, v5));
+        //System.out.println("Edge id (v2, v1): " + g.edgeId(v5, v4));
+
+        //Test out-degree
+        assertEquals(3, g.outDegree(v1));
+
+        //Test checkMyVertex
+        try {
+            g.checkMyVertex(20);
+        } catch(Exception e) {
+            //System.out.println("exception caught from checkMyVertex! Invalid vertex.");
+        }
+        try {
+            g.checkMyVertex(4);
+        } catch(Exception e) {
+            //System.out.println("exception caught from checkMyVertex! Invalid vertex.");
+        }
+        //Test vertices Iteration
+        for (int i : g.vertices()) {
+            //System.out.println("vertex iter: " + i);
+        }
+
+        //Test successors
+        /** Return successor K of V, numbering from 0, or 0 if there
+         *  is no such successor (or V is not a vertex). */
+        for (int i : g.successors(v1)) {
+            //System.out.println("successors iter: " + i);
+        }
+
+        //Test successor! Single method
+        assertEquals(v2, g.successor(v1, 0)); //v1's 0th successor should be v2
+        assertEquals(v3, g.successor(v1, 1)); //v1's 1th successor should be v3
+        assertEquals(0, g.successor(8, 100)); //should be 0
+
+        //Test predecessors
+        /** Return predecessor K of V, numbering from 0, or 0 if
+         *  there is no such predecessor.  Assumes V is one of my vertices. */
+
+        //Test neighbor
+        /** Return neighbor K of V, numbering from 0, or 0 if
+         *  there is no such neighbor.  Assumes V is one of my vertices.
+         *  This is a synonym for successor(v, k). */
+    }
+
+    @Test
+    public void undirectedTest() {
+        /**
+         * In an undirectedGraph, (u,v) and (v,u) should have the same edge ID.
+         * When (u,v) is removed (v,u) is also removed.
+         * When (u,v) is added, (v, u) is also added
+         * so 1 add should result in vertexSize = 2
+         */
+
+        //testing adding edges
+        UndirectedGraph ug = new UndirectedGraph();
+        int v1 = ug.add();
+        assertEquals(1, ug.vertexSize());
+        int v2 = ug.add();
+        int e1 = ug.add(v1, v2);
+        assertEquals(v1, e1);//add(u,v) should always return U
+        assertEquals(2, ug.edgeSize());//in undirected graph, adding 1 edge should result in 2 edges.
+        int e0 = ug.add(v2, v1);//should not add already existing edge
+        int e00 = ug.add(v1, v2);//should not add..
+        assertEquals(2, ug.edgeSize());
+        assertEquals(ug.edgeId(v1, v2), ug.edgeId(v2, v1));//checks that edge (v1, v2) and (v2, v1) have same ID
+
+
+        //test successor
+        assertEquals(v2, ug.successor(v1, 0));
+        assertEquals(v1, ug.successor(v2, 0));
+        assertEquals(0, ug.successor(v1, 1));//should be 0 because v1 doesn't have a 1th successor
+
+        //test successors
+        for (int i : ug.successors(v1)) {
+            //System.out.println("UG testing successor of v1: " + i);
+        }
+        for (int i : ug.successors(v2)) {
+            //System.out.println("UG testing successor of v2: " + i);
+        }
+
+        //test edges() Iteration for UNDIRECTED
+        int v3 = ug.add();
+        int v4 = ug.add();
+        int v5 = ug.add();
+        ug.add(v1, v2);//does nothing
+        ug.add(v1, v3);
+        ug.add(v1, v4);
+        ug.add(v2, v3);
+        ug.add(v3, v4);
+        ug.add(v4, v1);//should do nothing (1,4) so (4, 1) already added (edgeID already exists)
+        ug.add(v4, v5);//v4 and v5 to be used to test edgeID unique-ness
+        ug.add(v5, v4);//should do nothing (4,5) already added so (5,4) (edgeID already exists)
+        int count = 0;
+        for (int[] x : ug.edges()) {
+            count ++;
+            //System.out.println("(TEST)undirected edge iterations: " + Arrays.toString(x));
+        }
+        assertEquals(6, count);//count should be 6 because undirected graph (u,v) has same ID has (v,u)
+
+        //test out degree (out-degree of UNDIRECTED is inherited from graphObj)
+        assertEquals(3, ug.outDegree(v1));
+        assertEquals(2, ug.outDegree(v2));
+        assertEquals(3, ug.outDegree(v4));
+        //test in degree
+        assertEquals(3, ug.inDegree(v1));//in degree should equal out degree in Undirected.
+        assertEquals(3, ug.inDegree(v4));//v1 and v5
+    }
+
+    @Test
+    public void directedTest() {
+        DirectedGraph g = new DirectedGraph();
+        int v1 = g.add();
+        int v2 = g.add();
+        g.add(v1, v2);
+        assertEquals(1, g.edgeSize());
+        g.add(v2, v1);
+        assertEquals(2, g.edgeSize());
+
+        int v3 = g.add();
+        int v4 = g.add();
+        int v5 = g.add();
+        g.add(v1, v3);
+        g.add(v1, v4);
+        g.add(v2, v3);
+        g.add(v3, v4);
+        g.add(v4, v1);
+        g.add(v4, v5);
+        g.add(v5, v4);
+
+        //edge size
+        assertEquals(9, g.edgeSize());
+        //test out-degree (out-degree for directed graph is completely inherited from graphobj - no changes)
+        assertEquals(3, g.outDegree(v1));
+        assertEquals(2, g.outDegree(v4));
+
+        //test in-degree (in-degree for directed graph is overridden in directedGraph class)
+        assertEquals(3, g.inDegree(v4));//v1, v3, v5 point to v4
+        assertEquals(2, g.inDegree(v3));
+        assertEquals(2, g.inDegree(v1));//v2, v4 point to v1
+        assertEquals(1, g.inDegree(v5));//v4 points to v5
+    }
+
+    @Test
+    public void predecessorTest() {
+        //Directed graph
+
+        DirectedGraph g = new DirectedGraph();
+        int v1 = g.add(); int v2 = g.add();
+        int v3 = g.add(); int v4 = g.add();
+        g.add(v1, v2);
+        g.add(v1, v3);
+        g.add(v2, v3);
+        g.add(v3, v4);
+        g.add(v4, v2);
+
+        //single predecessor [WORKS]
+        assertEquals(0, g.predecessor(v1, 0));//0 because nothing precedes (points to) v1
+        assertEquals(0, g.predecessor(v3, 2));//TESTING OFF BY 1: 0 because v3 does not have a 2th predecessor (only 0th and 1th)
+        assertEquals(1 , g.predecessor(v3, 0));
+        assertEquals(2, g.predecessor(v3, 1));
+        assertEquals(1, g.predecessor(v2, 0));
+        assertEquals(4, g.predecessor(v2, 1));
+
+        //predecessors Iteration
+            //predecessors(v3) --> v1, v2
+
+        ArrayList<Integer> expV3 = new ArrayList<Integer>();
+        expV3.add(1); expV3.add(2);
+        ArrayList<Integer> actualV3 = new ArrayList<Integer>();
+        for (int i : g.predecessors(v3)) {//should print "v1" and "v2"
+            actualV3.add(i);
+        }
+        assertTrue(Arrays.equals(expV3.toArray(), actualV3.toArray()));
+
+        ArrayList<Integer> expV4 = new ArrayList<Integer>();
+        expV4.add(3);
+        ArrayList<Integer> actualV4 = new ArrayList<Integer>();
+        for (int n : g.predecessors(v4)) {//should print "v3"
+            actualV4.add(n);
+            //System.out.println("(directed) predessors iter: " + n);
+        }
+        assertTrue(Arrays.equals(expV4.toArray(), actualV4.toArray()));
+
+        //Undirected graph
+    }
+}

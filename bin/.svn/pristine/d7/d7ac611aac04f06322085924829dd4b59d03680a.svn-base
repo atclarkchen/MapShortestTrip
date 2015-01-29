@@ -1,0 +1,86 @@
+package graph;
+
+import java.util.ArrayList;
+
+/* See restrictions in Graph.java. */
+
+/** Represents a general unlabeled directed graph whose vertices are denoted by
+ *  positive integers. Graphs may have self edges.
+ *
+ *  @author ClarkChen
+ */
+public class DirectedGraph extends GraphObj {
+
+    @Override
+    public boolean isDirected() {
+        return true;
+    }
+
+    @Override
+    public int inDegree(int v) {
+        // FIXME
+        //inDegree --> how many things point to vertex v?
+        //System.out.println("inDegree for vertex: " + v);
+        int inDegree = 0;
+        if (!this.contains(v)) {
+            return 0;
+        }
+        Iteration<int[]> iter = this.edges();
+        for (int[] t : iter) {
+            if (t[1] == v) {
+                inDegree++;
+            }
+        }
+        return inDegree;
+    }
+
+    @Override
+    public int predecessor(int v, int k) {
+        // FIXME
+        /**
+         * See scratch paper for example
+         * For this example, in-Degree (count) of v3 = 2 (means it has a 0th and a 1th predecessor)
+         * Different Possible Cases:
+         * 1. predecessor(v1, 0) --> 0 because nothing points to 1. Indegree(v1) = 0
+         * 2. predecessor(v3, 2) --> 0 because there is no 5th predecessor (there are only 2)
+         * 3. k < 0
+         * 4. Actually get the predecessor: predecessor(v3, 1) = 2
+         * predecessor(v3, 0) = 1
+         */
+
+        int rtn = 0;
+        int count = inDegree(v);
+        //Case 1 & 2 & 3
+        if ((count == 0) || (k > count - 1) || (k < 0)) {
+            return 0;
+        }
+        //Case 4: by now, guaranteed to exist.
+        int i = 0;
+        for (int[] edge : this.edges()) {
+            if (edge[1] == v) {//since we want the ith predecessor, ONLY INCREMENT I if we've found a predecessor of "v"
+                _predecessors.add(edge[0]);
+                //System.out.println("(Directed) add to _predecessors: " + edge[0]);
+                if (i == k) {//if i = k, this is the edge we want
+                    return edge[0];//return the vertex of that edge (vertex = predecessor)
+                }
+                i++;
+            }
+        }
+
+        return rtn;
+    }
+
+    @Override
+    public Iteration<Integer> predecessors(int v) {
+        // FIXME
+        _predecessors = new ArrayList<Integer>();//must clear first
+        int k = inDegree(v) - 1;//the maximum kth value (up to and including last predecessor)
+        this.predecessor(v, k);//predecessor(v,k) will fill _predeccesors.
+        Iteration<Integer> iter = Iteration.iteration(_predecessors);
+        return iter;
+    }
+
+    // FIXME
+    private ArrayList<Integer>_predecessors = new ArrayList<Integer>();
+
+}

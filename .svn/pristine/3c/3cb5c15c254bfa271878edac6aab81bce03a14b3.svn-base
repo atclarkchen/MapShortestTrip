@@ -1,0 +1,327 @@
+package graph;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map.Entry;
+
+/* See restrictions in Graph.java. */
+
+/** A partial implementation of Graph containing elements common to
+ *  directed and undirected graphs.
+ *
+ *  @author ClarkChen
+ */
+
+abstract class GraphObj extends Graph {
+
+    /** A new, empty Graph. */
+    GraphObj() {
+        // FIXME
+        _adjList = new HashMap<Integer, LinkedList<Integer>>();
+        _vertexCount = 0;
+        _edgeCount = 0;
+        _currVertex = 0;
+        removeQueue = new LinkedList<Integer>();
+    }
+
+    @Override
+    public int vertexSize() {
+        // FIXME
+        return _vertexCount;
+    }
+
+    @Override
+    public int maxVertex() {
+        // FIXME
+        return _currVertex;
+    }
+
+    @Override
+    public int edgeSize() {
+        // FIXME
+    	if (!isDirected()) {
+    		return _edgeCount/2;
+    	}
+        return _edgeCount;
+    }
+
+    @Override
+    public abstract boolean isDirected();
+
+    @Override
+    public int outDegree(int v) {
+        // FIXME
+        if (_adjList.containsKey(v)) {
+            LinkedList<Integer> t = _adjList.get(v);
+            return t.size();
+        }
+        return 0;
+    }
+
+    @Override
+    public abstract int inDegree(int v);
+
+    @Override
+    public boolean contains(int u) {//check if contains vertex u. Vertices are "keys" in my hashMap
+        // FIXME
+        return _adjList.containsKey(u);
+    }
+
+    @Override
+    public boolean contains(int u, int v) {
+        // FIXME
+
+        if (!contains(u)) {//if key (vertex) is not even present, cannot contain edge.
+            return false;
+        }
+        LinkedList<Integer> temp = _adjList.get(u);
+        if (temp.contains(v)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int add() {
+        // FIXME
+        // Note: Let's say we have added 1, 2. We then remove 1. Then we add(). We should be ADDING 1.
+            //therefore, it goes to say that it makes sense to somehow store the vertices that are removed.
+
+        if (!removeQueue.isEmpty()) {//if removeQueue is not empty, we must add vertex from here before increasing currVertex and adfding that
+            int add = (int)removeQueue.poll();
+            _adjList.put(add, new LinkedList<Integer>());
+            _vertexCount++;
+            return add;
+        } else {//removeQueue is empty
+            _currVertex ++;
+            _adjList.put(_currVertex, new LinkedList<Integer>());//put(key, value). Vertex added has no incident edges.
+            _vertexCount++;
+            return _currVertex;
+        }
+    }
+
+    @Override
+    public int add(int u, int v) {//add edges
+        // FIXME
+
+        /**
+         * could be undirected or directed
+         * if undirected, add(u,v) must also add (v,u)
+         */
+        //case: either u or v are not valid vertices in graph
+        if (!_adjList.containsKey(u) || !_adjList.containsKey(v)) {
+            //System.out.println("ADD EDGE ERROR, U OR V DO NOT EXIST.");
+            return Integer.MIN_VALUE;
+        }
+        //case: edge from u to v already exist
+        if (this.contains(u, v)) {
+            //System.out.println("EDGE ALREADY EXISTS!");
+            return u;
+        }
+
+        //case: actually add the edge
+        //CASE 1: DIRECTED
+        //CASE 2: UNDIRECTED
+
+        //CASE DEFAULT: ALWAYS ADD (U,V)
+        LinkedList<Integer> t = _adjList.get(u);
+        t.add(v);
+        //System.out.println("(in add) Edges of Vertex " + u + ": " + t.toString());
+        _adjList.put(u, t);
+        //int edgeid = this.edgeId(u, v);
+        //_edgeID.add(edgeid);//checks if "this" graph is UNDIRECTED.
+        _edgeCount++;
+        if (!this.isDirected()) {//CASE 2: UNDIRECTED (MUST NOW ADD (V, U) and INCREMENT _EDGECOUNT)
+            LinkedList<Integer> t2 = _adjList.get(v);
+            t2.add(u);
+            _edgeCount++;
+            //NOTE: though I am adding THE CONJUGATE EDGE into _ADJLIST and updating EDGECOUNT, I am NOT ADDING A NEW EDGEID.
+            //PROGRAM DESIGNED SO THAT (U,V) AND (V, U) HAVE THE SAME ID.
+        }
+        return u;
+    }
+
+    @Override
+    public void remove(int v) {
+        // FIXME
+        //vertex does exist
+        if (_adjList.containsKey(v)) {
+            LinkedList<Integer> t = _adjList.get(v);
+            //remove the vertex (key) and all its mappings (edges), verify to be true
+            int numEdges = t.size();
+            _adjList.remove(v);
+            //System.out.println("remove: vertex " + v);
+            removeQueue.add(v);
+            _vertexCount--;
+            _edgeCount -= numEdges;//edgeCount minus the number of edges of that particular vertex "V"
+            //now, remove all edges that "point" to this nonexistent vertex from other vertices
+            for (int i : _adjList.keySet()) {
+                LinkedList<Integer> temp = _adjList.get(i);
+                if (temp.remove(Integer.valueOf(v))) {
+                    _edgeCount--;
+                }
+                _adjList.put(i, temp);
+
+                //System.out.println("(in remove) LinkedList: " + temp.toString());
+            }
+            return;
+        }
+        //vertex does not exist
+        //System.out.println("vertex does not exist!");
+    }
+
+    @Override
+    public void remove(int u, int v) {
+        // FIXME
+        /** Remove edge (U, V) from me, if present. */
+        //System.out.println("REMOVE SINGLE EDGE...");
+        if (this.contains(u, v)) {
+            //cannot use _adjList.remove(key) because that will remove the ENTIRE mapping (a.k.a the entire Linked Lists)
+            LinkedList<Integer> temp = _adjList.get(u);
+            temp.remove((Integer)v);
+            _adjList.put(u, temp);
+            _edgeCount--;
+        }
+    }
+
+    @Override
+    public Iteration<Integer> vertices() {
+        // FIXME
+        Iteration<Integer> s = Iteration.iteration(_adjList.keySet());
+        return s;
+    }
+
+    @Override
+    public int successor(int v, int k) {
+        // FIXME
+        /** Return successor K of V, numbering from 0, or 0 if there
+         *  is no such successor (or V is not a vertex). */
+        if (this.contains(v)) {
+            try {
+                int s = _adjList.get(v).get(k);
+                return s;
+            } catch (IndexOutOfBoundsException e) {//in case K does not exist (out of range)
+                return 0;
+            }
+        }//else, no vertex V
+        return 0;
+    }
+
+    @Override
+    public abstract int predecessor(int v, int k);
+
+    @Override
+    public Iteration<Integer> successors(int v) {
+        // FIXME
+        /** Returns an iteration over all successors of V in the order the edges
+         *  to them were added.  Empty if V is not my vertex. */
+
+        LinkedList<Integer> t = _adjList.get(v);
+        if (t == null || t.isEmpty()) {//case where V is not my vertex or there is no values in the linked list
+            //System.out.println("no successors");
+            //return null;
+        	return Iteration.iteration(new LinkedList<Integer>());//returns empty list now instead of null
+        }
+        Iteration<Integer> iter = Iteration.iteration(t);
+        return iter;
+    }
+
+    @Override
+    public abstract Iteration<Integer> predecessors(int v);
+
+    @Override
+    public Iteration<int[]> edges() {
+        // FIXME
+        /** Returns an iteration over all edges in me.  Edges are returned
+         *  as two-element arrays (u, v), which are directed if the graph
+         *  is.  In fact, the same array is used for each, and modified by
+         *  the next() method of the iteration.  */
+
+        ArrayList<int[]> edges = new ArrayList<int[]>();
+        ArrayList<Integer> edgeID = new ArrayList<Integer>();
+        for (int i : _adjList.keySet()) {//iterate through each vertex
+            LinkedList<Integer> t = _adjList.get(i);//gets the Linked List of edges at vertex "i"
+            for (int n : t) {//for each edge in the Linked List
+                int[] add = new int[2];
+                add[0] = i;//(v, ..)
+                add[1] = n;//(v, u)
+                //System.out.println("_EDGEID contains: " + _edgeID.toString());
+                //System.out.println("edgeID of " + i + ", " + n + " is " + this.edgeId(i, n));
+                if (!edgeID.contains(this.edgeId(i, n))) {//if edgeID does not already exist in _edgeID
+                    edges.add(add);//add to edges
+                    edgeID.add(this.edgeId(i, n));//store edgeID
+                }
+            }
+        }
+        Iteration<int[]> edgeIter = Iteration.iteration(edges);
+        //_edgeID = new ArrayList<Integer>();//need to wipe _edgeID. I only add to "edges" if _edgeID doesn't already contains that edge.
+        //so after the first use of this method, _edgeID will contain ALL VALID EDGES meaning that we WON'T SEE AN EDGE we haven't already encountered
+        //and added the ID of. THEREFORE, we need to wipe _edgeID clean. Meaning we don't need _edgeID as an instance variable of the class.
+        return edgeIter;
+    }
+
+    @Override
+    protected boolean mine(int v) {
+        // FIXME
+        /** Return true iff V is one of my vertices. */
+        if (_adjList.containsKey(v)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void checkMyVertex(int v) {
+        // FIXME
+        /** Throw exception if V is not one of my vertices. */
+        if (!_adjList.containsKey(v)) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    @Override
+    protected int edgeId(int u, int v) {
+        // FIXME
+        /** Returns a unique positive identifier for the edge (U, V), if it
+         *  is present, or 0 otherwise.  The value of edgeId(v0, v1) does
+         *  not change while the edge is present.  It is used in
+         *  LabeledGraph to number edges so that their labels are easy to
+         *  retrieve and set.  */
+        //return 0;
+        if (!this.contains(u, v)) {//if edge is not present return 0
+            return 0;
+        }
+        int edgeID;
+        if (!this.isDirected()) {//if it is undirected, arrange them to be same order so that (1,2) = (2,1) by re-arranging (2,1) to (1,2)
+            if (u > v) {//re-arrange from smallest to greatest so that un-directed edges are all the same.
+                int temp = v;
+                v = u;
+                u = temp;
+            }//get a unique number from 2 positive integers -->  0.5(a+b)(a+b+1)+b.
+        }
+        edgeID = (int)(0.5 * (u + v) * (u + v + 1) + v);
+        return edgeID;
+    }
+
+    // FIXME
+    /** Private variables. */
+
+    /** Data structure used to represent this class. */
+    private HashMap<Integer, LinkedList<Integer>> _adjList;
+
+    /** Current number of vertices in this graph.*/
+    private int _vertexCount;
+
+    /** Current number of edges in this graph. */
+    private int _edgeCount;
+
+    /** Represents the number of the current vertex. */
+    private int _currVertex;
+
+    /** Used for edges iteration. Contains only unique edgeID's.*/
+    //private ArrayList<Integer> _edgeID;
+
+    private LinkedList<Integer> removeQueue;
+}

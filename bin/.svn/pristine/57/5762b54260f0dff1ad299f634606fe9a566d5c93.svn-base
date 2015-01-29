@@ -1,0 +1,132 @@
+package graph;
+
+import static org.junit.Assert.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
+import org.junit.Test;
+
+public class PathsTesting {
+	/** Class used like a client would be; basically tests SimpleShortestPaths. */
+	class VideoGraphPaths extends SimpleShortestPaths {
+
+		public VideoGraphPaths(Graph G, int source, int dest) {
+			super(G, source, dest);
+			// TODO Auto-generated constructor stub
+			edgeWeights = new HashMap<Integer, Double>();
+			estimatedDistances = new HashMap<Integer, Double>();
+		}
+
+		@Override
+		public double getWeight(int u, int v) {//this is finally overrided here.
+			//needs some data structure where I can get edge weights
+			return edgeWeights.get(_G.edgeId(u, v));
+		}
+
+		@Override
+		public double estimatedDistance(int v) {
+			//return 0;
+			return estimatedDistances.get(v);
+		}
+
+		//method that sets edgeWeights and estimated Distances from vertex to destination
+		public void setEdgeWeight(int edgeID, double weight) {
+			edgeWeights.put(edgeID, weight);
+		}
+
+		public void setEstDist(int vertex, double est) {
+			estimatedDistances.put(vertex, est);
+		}
+		/** Private fields (necessary??) */
+		private HashMap<Integer, Double> edgeWeights;//maps EdgeID to EdgeWeight
+		//NOTE: COMPARATOR USES GET(INT U, INT V) edgeweight
+		private HashMap<Integer, Double> estimatedDistances;//maps vertex to weight
+	}
+
+	@Test
+	public void testWeights() {
+		//make a graph (hardcode) ones with weights and stuff
+		DirectedGraph G = new DirectedGraph();
+		int v1 = G.add(); int v2 = G.add(); int v3 = G.add();
+		int v4 = G.add(); int v5 = G.add(); int v6 = G.add();
+		int v7 = G.add();
+		int v8 = G.add();
+
+		G.add(v4, v3); G.add(v4, v2); G.add(v4, v5);
+		G.add(v2, v3);
+		G.add(v5, v3); G.add(v5, v6);
+		G.add(v6, v7);
+		G.add(v4, v1);
+		G.add(v1, v8);
+
+		//set edge weights in HashMap edgeWeights
+
+
+		VideoGraphPaths vgp = new VideoGraphPaths(G, 4, 3);
+		//setPaths info: Initialize the shortest paths. Must be called before using getWeight, getPredecessor, and pathTo
+		vgp.setEdgeWeight(G.edgeId(v4, v2), 12.2);
+		vgp.setEdgeWeight(G.edgeId(v4, v5), 11.2);
+		vgp.setEdgeWeight(G.edgeId(v2, v3), 6.5);
+		vgp.setEdgeWeight(G.edgeId(v5, v6), 30);
+		vgp.setEdgeWeight(G.edgeId(v4, v3), 102);
+		vgp.setEdgeWeight(G.edgeId(v5, v3), 9.1);
+		vgp.setEdgeWeight(G.edgeId(v6, v7), 100000);//give edge 6 to 7 a very large weight
+		vgp.setEdgeWeight(G.edgeId(v4, v1), 3);//weight 3 is relatively small (attractive)
+		vgp.setEdgeWeight(G.edgeId(v1, v8), 4);//weight 4 relatively small
+
+
+		vgp.setEstDist(v2, 4.0);
+		vgp.setEstDist(v3, 0.0);
+		vgp.setEstDist(v4, 102.0);
+		vgp.setEstDist(v5, 5.1);
+		vgp.setEstDist(v6, 40.0);
+		vgp.setEstDist(v7, 8.0);//this heuristic shouldn't matter, v6 should not be visited (v7 still has weight of infinity)
+		vgp.setEstDist(v1, 1000000000);//huge heuristic from v1 to destination.
+		vgp.setEstDist(v8, 10);//doesn't matter
+
+		vgp.setPaths();//initializes and traverses
+
+
+		//TESTS OF TESTING (this) class
+		//verify that getWeight, setWEight, getPred, setPred work
+		assertEquals(4, vgp.getSource());//check source
+		assertEquals(3, vgp.getDest());//check destination
+
+
+		List<Integer> actual = vgp.pathTo(3);
+
+		//TESTS for SHORTEST PATHS (MY IMPLEMENTATION)
+		//verify that source is 4, dest is 3
+		//verify output path
+		//verify that 5 is visited  (to check that V5 was visited, check that v6 has weight)
+		//verify that 6 is NOT visited
+
+		List<Integer> expected = new ArrayList<Integer>();
+		expected = Arrays.asList(4, 2, 3);//CURRENT PROBLEM: ACTUAL IS 4, 3
+		assertEquals(expected, actual);
+
+
+		//Test 3: Testing that your test detects when unnecessary vertices are visited.
+		//what is an unneccessary vertex?
+		//we know that v6 is not supposed to be visited. So FAIL when v6 is visited.
+		//VISIT means that the VISITED vertex has its edges RELAXED, so visit V4 gives 2 5 & 3 WEIGHTS (no longer infinity)
+		//V6 is Not supposed to be visited, so FAIL WHEN getWeight(V7) is not INFINITY
+				//give 6-7 something large, 7 is default to infinity
+		assertEquals(Double.POSITIVE_INFINITY, vgp.getWeight(v7), 0.001);
+
+		//Test 4: Testing that your test detects when estimated distance is ignored.
+		//basically testing if our comparator works (compare())
+			//Game-plan -- Making a situation: make estimate (bird flies from "v" to "dest") huge
+				//make the vertex weight small (so it should be traversed)
+				//result: "V" WILL BE VISISTED if estimated distance is ignored!
+		//connect v4 to v1 (with small edge-weight), and let v1 have a HUGE estimated distance to v3.
+		//connect v1 to v8 (with small edge-weight to make it naturally attractive)
+		//assert that: v1 is NOT visited by ensuring that v8 retains its default getWeight(v8) of INFINITY
+		assertEquals(Double.POSITIVE_INFINITY, vgp.getWeight(v8), 0.001);
+	}
+
+
+}

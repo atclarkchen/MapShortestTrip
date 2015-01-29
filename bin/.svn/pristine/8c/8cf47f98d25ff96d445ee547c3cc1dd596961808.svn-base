@@ -1,0 +1,15 @@
+package trip;
+
+import static org.junit.Assert.*;
+
+import org.junit.Test;
+
+public class TripTesting {
+
+	Trip trip = new Trip();
+	@Test
+	public void testReportSegment() {
+
+	}
+
+}
